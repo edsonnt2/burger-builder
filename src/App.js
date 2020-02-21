@@ -1,23 +1,16 @@
-import React from "react";
-
-function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+import React, { Component } from "react";
+import Layout from "./components/Layout";
+import BurgerBuilder from "./containers/BurgerBuilder";
+class App extends Component {
+  render() {
+    return (
+      <>
+        <Layout>
+          <BurgerBuilder />
+        </Layout>
+      </>
+    );
+  }
 }
 
 export default App;

@@ -4,6 +4,9 @@ import Burger from "../components/Burger";
 import BuildControls from "../components/Burger/BuildControls";
 import Modal from "../components/UI/Modal";
 import OrderSummary from "../components/Burger/OrderSummary";
+import api from "../service/api";
+import Spinner from "../components/UI/Spinner";
+import withErrorHandler from "../hoc/withErrorHandler";
 
 const INGREDIENT_PRICES = {
   salad: 0.5,
@@ -19,15 +22,16 @@ class BurgerBuilder extends Component {
   // }
 
   state = {
-    ingredients: {
-      salad: 0,
-      bacon: 0,
-      cheese: 0,
-      meat: 0
-    },
+    ingredients: null,
     totalPrice: 4,
     purchasable: true,
-    purchasing: false
+    purchasing: false,
+    loading: false
+  };
+
+  componentDidMount = async () => {
+    const resIg = await api.get("/ingredients.json");
+    if (resIg) this.setState({ ingredients: resIg.data });
   };
 
   updatePurchaseState = ingredients => {
@@ -56,9 +60,27 @@ class BurgerBuilder extends Component {
     this.setState({ purchasing: !this.state.purchasing });
   };
 
-  purchaseContinueHendler = () => {
-    alert("You continue !");
-    // this.setState({ purchasing: !this.state.purchasing });
+  purchaseContinueHendler = async () => {
+    this.setState({ loading: true });
+    const order = {
+      ingredients: this.state.ingredients,
+      price: this.state.totalPrice,
+      customer: {
+        name: "Edson Rodrigo",
+        address: {
+          street: "Test Street",
+          zipCode: "32424-332",
+          country: "Campinas"
+        },
+        email: "test@test.com"
+      },
+      deliveryMethod: "iFood"
+    };
+
+    const res = await api.post("/orders.json", order);
+    if (res) console.log(res);
+
+    this.setState({ loading: false, purchasing: false });
   };
 
   render() {
@@ -71,26 +93,36 @@ class BurgerBuilder extends Component {
     }
 
     return (
-      <Aux>
-        <Modal show={this.state.purchasing} clicked={this.purchaseHendler}>
-          <OrderSummary
-            ingredients={this.state.ingredients}
-            purchaseCanceled={this.purchaseHendler}
-            purchaseContinued={this.purchaseContinueHendler}
-            price={this.state.totalPrice}
-          />
-        </Modal>
-        <Burger ingredients={this.state.ingredients} />
-        <BuildControls
-          ingredientAddedRemoved={this.addRemoveIngredientHandler}
-          disabled={disabledInfo}
-          price={this.state.totalPrice}
-          purchasable={this.state.purchasable}
-          ordered={this.purchaseHendler}
-        />
-      </Aux>
+      <>
+        {this.state.ingredients ? (
+          <Aux>
+            <Burger ingredients={this.state.ingredients} />
+            <BuildControls
+              ingredientAddedRemoved={this.addRemoveIngredientHandler}
+              disabled={disabledInfo}
+              price={this.state.totalPrice}
+              purchasable={this.state.purchasable}
+              ordered={this.purchaseHendler}
+            />
+            <Modal show={this.state.purchasing} clicked={this.purchaseHendler}>
+              {this.state.loading ? (
+                <Spinner />
+              ) : (
+                <OrderSummary
+                  ingredients={this.state.ingredients}
+                  purchaseCanceled={this.purchaseHendler}
+                  purchaseContinued={this.purchaseContinueHendler}
+                  price={this.state.totalPrice}
+                />
+              )}
+            </Modal>
+          </Aux>
+        ) : (
+          <Spinner />
+        )}
+      </>
     );
   }
 }
 
-export default BurgerBuilder;
+export default withErrorHandler(BurgerBuilder, api);

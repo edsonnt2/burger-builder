@@ -30,6 +30,7 @@ class BurgerBuilder extends Component {
   };
 
   componentDidMount = async () => {
+    console.log(this.props);
     const resIg = await api.get("/ingredients.json");
     if (resIg) this.setState({ ingredients: resIg.data });
   };
@@ -60,27 +61,22 @@ class BurgerBuilder extends Component {
     this.setState({ purchasing: !this.state.purchasing });
   };
 
-  purchaseContinueHendler = async () => {
-    this.setState({ loading: true });
-    const order = {
-      ingredients: this.state.ingredients,
-      price: this.state.totalPrice,
-      customer: {
-        name: "Edson Rodrigo",
-        address: {
-          street: "Test Street",
-          zipCode: "32424-332",
-          country: "Campinas"
-        },
-        email: "test@test.com"
-      },
-      deliveryMethod: "iFood"
-    };
-
-    const res = await api.post("/orders.json", order);
-    if (res) console.log(res);
-
-    this.setState({ loading: false, purchasing: false });
+  purchaseContinueHendler = () => {
+    const queryParams = [];
+    for (const i in this.state.ingredients) {
+      queryParams.push(
+        encodeURIComponent(i) +
+          "=" +
+          encodeURIComponent(this.state.ingredients[i])
+      );
+    }
+    queryParams.push(`price=${this.state.totalPrice}`);
+    const queryString = queryParams.join("&");
+    this.props.history.push({
+      pathname: "/checkout",
+      search: `?${queryString}`
+    });
+    // this.props.history.push(`/checkout?${queryParams}`);
   };
 
   render() {
